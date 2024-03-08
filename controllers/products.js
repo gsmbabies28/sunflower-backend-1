@@ -48,7 +48,19 @@ module.exports.getProductByName = async ( req, res ) => {
     }   
 }
 
-
+//get product by ID
+module.exports.getProductByID = async ( req, res ) => {
+    try {
+        const data = matchedData(req);
+        const product = await Products.findById(data.id);
+        if(!product) {
+            return res.status(404).send({msg: 'No product found'})
+        }
+            return res.status(200).send({msg: product})
+    } catch (error) {
+        return res.sendStatus(500);
+    }
+}
 
 // get featured products
 module.exports.getFeaturedProducts = async (req, res) => {

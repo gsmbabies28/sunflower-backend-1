@@ -13,10 +13,12 @@ router.route('/')
 
 router.route('/:id')
 .patch( productController.editProduct )
+.get( param('id').escape(), productController.getProductByID )
 
-router.get('/details/:name', param('name').escape().trim(), productController.getProductByName)
-router.get('/featured', productController.getFeaturedProducts)
-router.get('/alsoLikeProduct', productController.getAlsoLikeProduct)
+router.get('/details/:name', param('name').escape().trim(), productController.getProductByName),
+
+router.get('/featured/all', productController.getFeaturedProducts)
+router.get('/alsoLikeProduct/all', productController.getAlsoLikeProduct)
 router.post('/upload', productController.upload)
 
 

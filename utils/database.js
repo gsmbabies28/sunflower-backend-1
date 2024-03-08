@@ -8,7 +8,7 @@ module.exports.connectDB = async () => {
         mongoose.connection.on('reconnected', () => console.log('reconnected'));
         mongoose.connection.on('disconnecting', () => console.log('disconnecting'));
         mongoose.connection.on('close', () => console.log('close'));
-        await mongoose.connect('mongodb+srv://travfet:sNUcqtT7YvHYsU48@cluster0.o7yshyz.mongodb.net/Sunflower');
+        await mongoose.connect(process.env.MONGODB_SRV);
     } catch (error) {
         console.log(error);
     }
