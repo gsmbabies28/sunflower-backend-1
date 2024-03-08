@@ -141,3 +141,8 @@ module.exports.upload = (req, res) => {
         return res.status(201).send({msg: uploadPath})
     })
 }
+
+//[Delete section]
+module.exports.deleteProduct = ( req, res ) => {
+    console.log('delete product')
+}

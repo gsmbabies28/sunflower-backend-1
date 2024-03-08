@@ -14,6 +14,7 @@ router.route('/')
 router.route('/:id')
 .patch( productController.editProduct )
 .get( param('id').escape(), productController.getProductByID )
+.delete( productController.deleteProduct )
 
 router.get('/details/:name', param('name').escape().trim(), productController.getProductByName),
 
