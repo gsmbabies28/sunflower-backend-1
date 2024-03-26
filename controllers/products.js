@@ -5,30 +5,107 @@ const Products = require('../models/Products');
 
 //[GET-section]
 //get all active products
+//offset pagination
 module.exports.getAllProducts = async (req, res) => {
     try {
         const result = validationResult(req)
         if(!result.isEmpty()) 
-            return res.status(400).send({error: result.array()})
+            return res.status(400).send({error: result.array()});
+
         const data = matchedData(req);
-        // if(isNaN(data.page)||data.page==0)
-        //     return res.status(400).send({error: "Invalid query parameter"})
         const pageNumber = parseInt(data.page); // Page number (1-based index)
         const pageSize = 16;
         const skip = (pageNumber - 1) * pageSize;
-        let query;
 
-        if(data.category){
-            query = {category: data.category};
+        let query = {
+            isActive:true
+        };
+        
+        data.category && (query.category = data.category);
+        data.isAvailable && (query.isAvailable = Boolean(data.isAvailable));
+        data.color && (query.color = data.color);
+        
+
+        const products = await Products.find({name:{$regex: data.name,$options:'i'},...query}).sort({name:1}).skip(skip).limit(pageSize).exec()
+       
+        switch(data.sort){
+            case "desc":
+                products.reverse();
+                break;
+            case "lowPrice":
+                products.sort((a,b)=>a.price-b.price);
+                break;
+            case "highPrice":
+                products.sort((a,b)=>b.price-a.price);
+                break;
+            case "newest":
+                products.sort( (a,b) => b.created - a.created );
+
+            case "oldest":
+                products.sort( (a,b) => a.created - b.created );
         }
 
-        const products = await Products.find({name:{$regex: data.name,$options:'i'},isActive:true,...query}).sort({name:1}).skip(skip).limit(pageSize).exec()
-        const totalPage = await Products.countDocuments(query);
+        const totalPage = await Products.countDocuments({isActive:true ,...query});
         return res.status(200).send({msg: products, totalPage: Math.ceil(totalPage/pageSize)})
     } catch (error) {
         return res.status(500).send({error: error});
     }   
 }
+
+//get all active products
+//cursor pagination
+// module.exports.getAllProducts2 = async (req, res) => {
+//     try {
+//         const result = validationResult(req)
+//         if (!result.isEmpty()) 
+//             return res.status(400).send({ error: result.array() })
+        
+//         const data = matchedData(req);
+//         const pageSize = 16;
+
+//         let query = {
+//             isActive: true
+//         };
+
+//         if (data.category) {
+//             query.category = data.category;
+//         }
+
+//         // Construct the cursor based on the provided cursor or default to null
+//         let cursor = null;
+//         if (data.cursor) {
+//             cursor = { _id: { $gt: data.cursor } };
+//         }
+
+//         const products = await Products.find({
+//             ...query,
+//             ...cursor
+//         })
+//         .sort({ name: 1 })
+//         .limit(pageSize)
+//         .exec();
+
+//         // Determine the next cursor
+//         const nextCursor = products.length > 0 ? products[products.length - 1]._id : null;
+
+//         // Optionally, you can return the previous cursor as well if needed
+//         const prevCursor = data.cursor;
+
+//         // Get the total count for calculating total pages
+//         const totalProducts = await Products.countDocuments(query);
+
+//         return res.status(200).send({
+//             msg: products,
+//             nextCursor: nextCursor,
+//             prevCursor: prevCursor,
+//             totalPage: Math.ceil(totalProducts / pageSize),
+//             length: products.length
+//         });
+//     } catch (error) {
+//         return res.status(500).send({ error: error });
+//     }
+// }
+
 
 //get single active products
 module.exports.getProductByName = async ( req, res ) => {
@@ -52,7 +129,7 @@ module.exports.getProductByName = async ( req, res ) => {
 module.exports.getProductByID = async ( req, res ) => {
     try {
         const data = matchedData(req);
-        const product = await Products.findById(data.id);
+        const product = await Products.findOne({_id:data.id, isActive:true});
         if(!product) {
             return res.status(404).send({msg: 'No product found'})
         }
@@ -60,6 +137,16 @@ module.exports.getProductByID = async ( req, res ) => {
     } catch (error) {
         return res.sendStatus(500);
     }
+}
+
+//get product by Array of ID's
+module.exports.getProductsByArray = async ( req, res ) => {
+    try {
+        const result = validationResult(req);
+        console.log(result);
+    } catch (error) {
+        return res.sendStatus(500);
+    }   
 }
 
 // get featured products
