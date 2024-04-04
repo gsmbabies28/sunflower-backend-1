@@ -1,32 +1,45 @@
 const { validationResult, matchedData } = require('express-validator');
 var path = require('path');
 const Products = require('../models/Products');
+const { default: mongoose } = require('mongoose');
 
 
 //[GET-section]
 //get all active products
 //offset pagination
 module.exports.getAllProducts = async (req, res) => {
-    try {
-        const result = validationResult(req)
-        if(!result.isEmpty()) 
-            return res.status(400).send({error: result.array()});
+    const result = validationResult(req)
 
+    if(!result.isEmpty()) 
+        return res.status(400).send({error: result.array()});
+    try {
         const data = matchedData(req);
-        const pageNumber = parseInt(data.page); // Page number (1-based index)
+       
+        const pageNumber = parseInt(data.page) || 1; // Page number (1-based index)
         const pageSize = 16;
         const skip = (pageNumber - 1) * pageSize;
 
-        let query = {
+        const query = {
             isActive:true
         };
-        
-        data.category && (query.category = data.category);
-        data.isAvailable && (query.isAvailable = Boolean(data.isAvailable));
-        data.color && (query.color = data.color);
-        
 
-        const products = await Products.find({name:{$regex: data.name,$options:'i'},...query}).sort({name:1}).skip(skip).limit(pageSize).exec()
+        //query
+        data.name && (query.name = {$regex:data.name,$options:'i'})
+        data.search && (query.name = {$regex:data.search,$options:'i'})
+        data.isAvailable && (query.isAvailable = data.isAvailable);
+        data.color && (query.color = data.color);
+        data.category_class && (query['category.class'] = data.category_class);
+        data.category_type && (query['category.type'] = {$in:data.category_type});
+        data.category_gender && (query['category.gender'] = data.category_gender);
+        data.category_eventType && (query['category.eventType'] = {$in:data.category_eventType});
+        
+        console.log(query);
+
+        const products = await Products.find(query)
+        .sort({name:1})
+        .skip(skip)
+        .limit(pageSize)
+        .exec()
        
         switch(data.sort){
             case "desc":
@@ -46,7 +59,8 @@ module.exports.getAllProducts = async (req, res) => {
         }
 
         const totalPage = await Products.countDocuments({isActive:true ,...query});
-        return res.status(200).send({msg: products, totalPage: Math.ceil(totalPage/pageSize)})
+        return res.status(200).send({msg: products, totalPage: Math.ceil(totalPage/pageSize)});
+
     } catch (error) {
         return res.status(500).send({error: error});
     }   
@@ -104,19 +118,20 @@ module.exports.getAllProducts = async (req, res) => {
 //     } catch (error) {
 //         return res.status(500).send({ error: error });
 //     }
+// 
 // }
 
-
 //get single active products
+
 module.exports.getProductByName = async ( req, res ) => {
     try {
         const result = validationResult(req)
         if(!result.isEmpty()) 
             return res.status(400).send({error: result.array()})
         const data = matchedData(req);
-        const trimmedData = data.name.replace(/[-]/g, ' ');
-        console.log(trimmedData)
-        const products = await Products.findOne({name:trimmedData,isActive:true})
+        const trimmedData = data.name.replace(/[-]/gi, ' ');
+        console.log(trimmedData);
+        const products = await Products.findOne({name:trimmedData,isActive:true}).exec();
         if(!products) 
             return res.status(404).send({msg:"No product found"});
         return res.status(200).send({msg: products})
@@ -188,6 +203,7 @@ module.exports.addProducts = async (req, res) => {
     
     try {
         const result = validationResult(req);
+        // console.log(result);
         if(result.isEmpty()){
             const data= matchedData(req)
             const product = await Products.create(data);
@@ -195,7 +211,7 @@ module.exports.addProducts = async (req, res) => {
         }
          return res.status(400).send({error: result.array()})
     } catch (error) {
-        return res.sendStatus(500);
+        return res.status(500).send({msg:error});
     }
     
 }
@@ -203,19 +219,28 @@ module.exports.addProducts = async (req, res) => {
 
 //[Patch-section]
 
-module.exports.editProduct = async ( req, res ) => {
+module.exports.editProduct = async ( req, res )  =>  {
 
     const id = req.params.id
+    const result = validationResult(req);
+    const data =  matchedData(req);
+    console.log(data);
+    if(!mongoose.Types.ObjectId.isValid(id))
+        return res.send({msg: "Invalid ID"})
+    if(!result.isEmpty())
+        return res.send({msg: result.array()})
     try {
-        const product = await Products.findByIdAndUpdate(id, {...req.body},{new:true});
-        return res.status(200).send({msg: product})
+        const product = await Products.findByIdAndUpdate(id, data,{new:true});
+        if(product)
+            return res.status(200).send({msg: product})
+        return res.status(404).send({msg:"Product not found"})
     } catch (error) {
         return res.sendStatus(500) 
     }
 
 }
 
-
+//use multer modules for images upload
 module.exports.upload = (req, res) => {
     if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).send('No files were uploaded.');

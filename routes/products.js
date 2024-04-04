@@ -1,25 +1,31 @@
 var express = require('express');
 var router = express.Router();
-const {checkSchema,query,param,body} = require('express-validator')
-const {schemaProducts} =require('../utils/validators/productsValidatorSchema')
+const {checkSchema,query,param,body, checkExact,oneOf} = require('express-validator')
+const {schemaProducts} =require('../utils/validators/productsValidatorSchema');
+const {searchValidatorSchema} = require('../utils/validators/searchValidatorSchema')
 const productController = require('../controllers/products')
 
 router.route('/')
-.get(query('name').escape()
-,query('page').escape()
-,query('category').escape()
-,query('isAvailable').escape()
-,query('color').escape()
-,query('sort').escape()
-,productController.getAllProducts )  
-.post(checkSchema( schemaProducts ),productController.addProducts );
+.get(
+    checkSchema(searchValidatorSchema,['query']),
+    productController.getAllProducts 
+)  
+.post(
+    checkSchema( schemaProducts ), 
+    checkExact(), 
+    productController.addProducts 
+);
 
 router.route('/:id')
-.patch( productController.editProduct )
+.patch( body("*").escape(), productController.editProduct )
 .get( param('id').escape(), productController.getProductByID )
 .delete( productController.deleteProduct )
 
-router.get('/details/:name', param('name').escape().trim(), productController.getProductByName),
+router.get('/details/:name', 
+    param('name').trim().escape(),
+    productController.getProductByName
+);
+
 router.get('/getProductsByArray', body('products').isArray(), productController.getProductsByArray );
 
 router.get('/featured/all', productController.getFeaturedProducts)
