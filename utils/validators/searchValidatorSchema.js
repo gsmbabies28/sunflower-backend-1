@@ -11,6 +11,9 @@ module.exports.searchValidatorSchema = {
     isAvailable: {
         escape: true,
     },
+    rented: {
+        escape: true,
+    },
     sort: {
         escape: true
     },
@@ -25,5 +28,14 @@ module.exports.searchValidatorSchema = {
     },
     category_eventType: {
         escape: true
+    },
+    color: {
+        escape: true
+    },
+    minPrice:{
+        escape: true
+    },
+    maxPrice: {
+        escape: true 
     }
 }

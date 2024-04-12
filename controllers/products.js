@@ -12,54 +12,71 @@ module.exports.getAllProducts = async (req, res) => {
 
     if(!result.isEmpty()) 
         return res.status(400).send({error: result.array()});
+
+    const data = matchedData(req);
+    const pageNumber = parseInt(data.page) || 1; // Page number (1-based index)
+    const pageSize = 16;
+    const skip = (pageNumber - 1) * pageSize;
+    const query = {
+        isActive:true
+    };
+    data.name && (query.name = {$regex:data.name,$options:'i'})
+    data.search && (query.name = {$regex:data.search,$options:'i'})
+    data.isAvailable && (query.isAvailable = true);
+    data.rented && (query.isAvailable = false);
+    if(data.color){
+        let regex = data.color instanceof Array ? data.color.join('|') : data.color;
+        query.color = {$regex: regex, $options: 'i'};
+    } 
+    data.category_class && (query['category.class'] = data.category_class);
+    data.category_type && (query['category.type'] = {$in:data.category_type});
+    data.category_gender && (query['category.gender'] = data.category_gender);
+    data.category_eventType && (query['category.eventType'] = {$in:data.category_eventType});
+    data.minPrice && (query.price={$gte:data.minPrice});
+    data.maxPrice && (query.price={$lte:data.maxPrice});
+
+    if(data.minPrice && data.maxPrice)
+        query.price = { $gte:data.minPrice, $lte:data.maxPrice  }
+
+    if(data.isAvailable && data.rented) 
+        delete query.isAvailable
+
+    console.log(query);
+
     try {
-        const data = matchedData(req);
-       
-        const pageNumber = parseInt(data.page) || 1; // Page number (1-based index)
-        const pageSize = 16;
-        const skip = (pageNumber - 1) * pageSize;
-
-        const query = {
-            isActive:true
-        };
-
-        //query
-        data.name && (query.name = {$regex:data.name,$options:'i'})
-        data.search && (query.name = {$regex:data.search,$options:'i'})
-        data.isAvailable && (query.isAvailable = data.isAvailable);
-        data.color && (query.color = data.color);
-        data.category_class && (query['category.class'] = data.category_class);
-        data.category_type && (query['category.type'] = {$in:data.category_type});
-        data.category_gender && (query['category.gender'] = data.category_gender);
-        data.category_eventType && (query['category.eventType'] = {$in:data.category_eventType});
-        
-        console.log(query);
-
         const products = await Products.find(query)
         .sort({name:1})
         .skip(skip)
         .limit(pageSize)
         .exec()
-       
-        switch(data.sort){
-            case "desc":
-                products.reverse();
-                break;
-            case "lowPrice":
-                products.sort((a,b)=>a.price-b.price);
-                break;
-            case "highPrice":
-                products.sort((a,b)=>b.price-a.price);
-                break;
-            case "newest":
-                products.sort( (a,b) => b.created - a.created );
 
-            case "oldest":
-                products.sort( (a,b) => a.created - b.created );
+        if(!products) 
+            return res.status(404).send({errorMsg:"Products not found!"});
+        
+        switch(data.sort){
+        case "desc":
+            products.reverse();
+            break;
+        case "lowPrice":
+            products.sort((a,b)=>a.price-b.price);
+            break;
+        case "highPrice":
+            products.sort((a,b)=>b.price-a.price);
+            break;
+        case "newest":
+            products.sort( (a,b) => b.created - a.created );
+
+        case "oldest":
+            products.sort( (a,b) => a.created - b.created );
         }
 
         const totalPage = await Products.countDocuments({isActive:true ,...query});
-        return res.status(200).send({msg: products, totalPage: Math.ceil(totalPage/pageSize)});
+
+        return res.status(200).send({
+            msg: products, 
+            totalProducts:products.length, 
+            totalPage: Math.ceil(totalPage/pageSize)
+        });
 
     } catch (error) {
         return res.status(500).send({error: error});
