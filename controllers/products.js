@@ -17,9 +17,11 @@ module.exports.getAllProducts = async (req, res) => {
     const pageNumber = parseInt(data.page) || 1; // Page number (1-based index)
     const pageSize = 16;
     const skip = (pageNumber - 1) * pageSize;
+    console.log(data)
     const query = {
         isActive:true
     };
+
     data.name && (query.name = {$regex:data.name,$options:'i'})
     data.search && (query.name = {$regex:data.search,$options:'i'})
     data.isAvailable && (query.isAvailable = true);
