@@ -29,6 +29,9 @@ module.exports.searchValidatorSchema = {
     category_eventType: {
         escape: true
     },
+    category_ageGroup: {
+        escape: true
+    },
     color: {
         escape: true
     },

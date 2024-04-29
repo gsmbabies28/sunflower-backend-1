@@ -17,7 +17,9 @@ module.exports.getAllProducts = async (req, res) => {
     const pageNumber = parseInt(data.page) || 1; // Page number (1-based index)
     const pageSize = 16;
     const skip = (pageNumber - 1) * pageSize;
+
     console.log(data)
+
     const query = {
         isActive:true
     };
@@ -26,10 +28,13 @@ module.exports.getAllProducts = async (req, res) => {
     data.search && (query.name = {$regex:data.search,$options:'i'})
     data.isAvailable && (query.isAvailable = true);
     data.rented && (query.isAvailable = false);
+
     if(data.color){
         let regex = data.color instanceof Array ? data.color.join('|') : data.color;
         query.color = {$regex: regex, $options: 'i'};
     } 
+    
+    data.category_ageGroup && (query['category.ageGroup'] = data.category_ageGroup);
     data.category_class && (query['category.class'] = data.category_class);
     data.category_type && (query['category.type'] = {$in:data.category_type});
     data.category_gender && (query['category.gender'] = data.category_gender);
@@ -52,7 +57,7 @@ module.exports.getAllProducts = async (req, res) => {
         .limit(pageSize)
         .exec()
 
-        if(!products) 
+        if(!products.length) 
             return res.status(404).send({errorMsg:"Products not found!"});
         
         switch(data.sort){
