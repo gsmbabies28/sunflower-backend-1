@@ -48,7 +48,7 @@ module.exports.getAllProducts = async (req, res) => {
     if(data.isAvailable && data.rented) 
         delete query.isAvailable
 
-    console.log(query);
+    console.log(data.sort);
 
     try {
         const products = await Products.find(query)
@@ -72,7 +72,6 @@ module.exports.getAllProducts = async (req, res) => {
             break;
         case "newest":
             products.sort( (a,b) => b.created - a.created );
-
         case "oldest":
             products.sort( (a,b) => a.created - b.created );
         }
