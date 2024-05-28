@@ -22,6 +22,13 @@ const userSchema = new Schema({
         type: String,
         minLength: 8,
         required: [true, "Password is required"]
+    },
+    address:{
+        type: String,
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
 });
 

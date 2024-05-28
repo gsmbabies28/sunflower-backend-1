@@ -1,5 +1,6 @@
 var express = require("express");
 var router = express.Router();
+const {verify, verifyAdmin} = require("../auth");
 const { checkSchema, param, body, checkExact } = require("express-validator");
 const {
   schemaProducts
@@ -16,6 +17,8 @@ router
     productController.getAllProducts
   )
   .post(
+    verify,
+    verifyAdmin,
     checkSchema(schemaProducts),
     checkExact(),
     productController.addProducts
