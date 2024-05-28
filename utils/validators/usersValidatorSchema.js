@@ -44,13 +44,17 @@ module.exports.schemaUser = {
             errorMessage: "Please enter a string value"
         },
         isLength: {
+            errorMessage: "Password must be atleast 8 characters",
             options: {min:8}
-        },
-        escape: true,
+        }
     },
     confirmPassword: {
         notEmpty:{
             errorMessage:"Please enter a confirm password"
+        },
+        isLength: {
+            errorMessage: "Password must be atleast 8 characters",
+            options: {min:8}
         },
         custom: {
             options: (value, { req }) => {
@@ -59,6 +63,6 @@ module.exports.schemaUser = {
                 }
                 return true;
             }
-        },
+        }
     }
 }
