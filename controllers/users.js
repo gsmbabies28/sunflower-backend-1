@@ -48,7 +48,7 @@ module.exports.Register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(data.password,10);
         const saveUser = new User({...data,password:hashedPassword});
         await saveUser.save();
-        return res.status(200).send({msg:"Registration success!"});
+        return res.status(201).send({msg:"Registration success!"});
     } catch (error) {
         return res.status(500).send({msg: error.msg});
     }
