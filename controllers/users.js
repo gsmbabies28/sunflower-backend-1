@@ -5,7 +5,7 @@ const auth = require('../auth');
 const User = require('../models/Users');
 
 
-module.exports.Login = async (req, res) => {
+module.exports.login = async (req, res) => {
     const result = validationResult(req);
     
     if(!result.isEmpty())
@@ -23,20 +23,20 @@ module.exports.Login = async (req, res) => {
         const isPasswordMatched = await bcrypt.compare(data.password, user.password);
 
         if(!isPasswordMatched)
-            return res.status(400).send({msg:"Invalid crendentials!"});
+            return res.status(401).send({msg:"Invalid crendentials!"});
         
         const createdToken = auth.createToken(user)
         return res.status(200).send({
-                                    msg:"Login Success!",
-                                    token:createdToken
-                                });
+            msg:"Login Success!",
+            token:createdToken
+        });
 
     } catch (error) {
         return res.status(500).send({msg:error.msg});
     }
 };
 
-module.exports.Register = async (req, res) => {
+module.exports.register = async (req, res) => {
     const result = validationResult(req);
     
     if(!result.isEmpty())
@@ -53,3 +53,14 @@ module.exports.Register = async (req, res) => {
         return res.status(500).send({msg: error.msg});
     }
 };
+
+module.exports.getUserDetails = async ( req, res ) => {
+    const {id} = req.user;
+    console.log(id);
+    try {
+        const findUser = await User.findById(id,{_id:0,password:0});
+        return res.status(200).send({msg:findUser});
+    } catch (error) {
+        return res.status(500).send({error: error});
+    }
+}
