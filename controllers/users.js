@@ -12,16 +12,17 @@ module.exports.login = async (req, res) => {
         return res.status(400).send({error:result.array()});
 
     const data = matchedData(req);
+    console.log(data);
 
     try {
-        const findUser = await User.where({email:data.email});
-        const user = await findUser.findOne();
-        
+
+        const user = await User.findOne({email:data.email});
+
         if(!user)
             return res.status(404).send({msg:"No email found!"});
 
         const isPasswordMatched = await bcrypt.compare(data.password, user.password);
-
+        
         if(!isPasswordMatched)
             return res.status(401).send({msg:"Invalid crendentials!"});
         
@@ -32,8 +33,9 @@ module.exports.login = async (req, res) => {
         });
 
     } catch (error) {
-        return res.status(500).send({msg:error.msg});
+        return res.status(500).send({msg:error});
     }
+
 };
 
 module.exports.register = async (req, res) => {
@@ -46,7 +48,7 @@ module.exports.register = async (req, res) => {
 
     try {
         const hashedPassword = await bcrypt.hash(data.password,10);
-        const saveUser = new User({...data,password:hashedPassword});
+        const saveUser =  new User({...data,password:hashedPassword});
         await saveUser.save();
         return res.status(201).send({msg:"Registration success!"});
     } catch (error) {
