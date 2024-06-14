@@ -14,7 +14,7 @@ module.exports.login = async (req, res) => {
     const data = matchedData(req);
 
     try {
-        const findUser = User.where({email:data.email});
+        const findUser = await User.where({email:data.email});
         const user = await findUser.findOne();
         
         if(!user)
