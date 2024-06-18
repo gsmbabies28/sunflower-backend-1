@@ -5,10 +5,13 @@ const { checkSchema, checkExact } = require("express-validator");
 const {schemaUser} = require("../utils/validators/usersValidatorSchema");
 const {schemaLogin} = require("../utils/validators/loginValidatorSchema");
 const {verify,verifyAdmin} = require('../auth');
+
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+router.get('/',
+  verify,
+  userController.getUserDetails
+);
+
 
 router.post(
   '/register', 
@@ -24,10 +27,6 @@ router.post(
   userController.login
 );
 
-router.get(
-  '/getUserDetails', 
-  verify,
-  userController.getUserDetails
-);
+
 
 module.exports = router;
